@@ -21,13 +21,20 @@ function processBackgroundColor(el) {
 
 // Function to process elements with links and styles
 function processElementLinks(paragraphs) {
-    const tagMappingtoClass=new Map([['i',['con-button']],['b',['con-button','blue']]]);
+     const tagMappingToClass = new Map([
+        ['i', ['con-button']],
+        ['b', ['con-button', 'blue']]
+    ]);
+    if (!paragraphs) {
+        console.error('processElementLinks: No paragraphs provided');
+        return;
+    }
     paragraphs.forEach(paragraph => {
-        const tagList= Array.from(tagMappingtoClass.keys()).join(',');
+        const tagList= Array.from(tagMappingToClass.keys()).join(',');
         paragraph.querySelectorAll('a').forEach(link => {    
             const parentTag = link.closest(tagList);
             if(parentTag){
-                const classList=tagMappingtoClass.get(parentTag.tagName.toLowerCase())
+                const classList=tagMappingToClass.get(parentTag.tagName.toLowerCase())
                 if (classList){
                     classList.forEach(actionClassname=>{ link.classList.add(actionClassname)})
                     parentTag.before(link);
@@ -39,6 +46,10 @@ function processElementLinks(paragraphs) {
 }
 
 function processHero(el) {
+    if (!el) {
+        console.error('processHero: No element provided');
+        return;
+    }
     processBackgroundColor(el);
     const paragraphs = el.querySelectorAll('p');
     paragraphs.forEach(p => p.querySelector('a') && p.classList.add('action-area'));
@@ -46,9 +57,14 @@ function processHero(el) {
 }
 
 function processBrick(el) {
+    const MIN_PARAGRAPHS_NUMBER=3;
+    if (!el) {
+        console.error('processBrick: No element provided');
+        return;
+    }
     processBackgroundColor(el);
     const paragraphs = [...el.querySelectorAll('p')];
-    if (paragraphs.length < 3) {
+    if (paragraphs.length < MIN_PARAGRAPHS_NUMBER) {
         console.error('Brick div does not contain 3 paragraphs.');
         return;
     }
