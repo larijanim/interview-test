@@ -13,62 +13,108 @@ const FAQ = [
     }
 ];
 
-// add code here if needed
-
 function processBackgroundColor(el) {
-    // add code here
+    if (!el.firstElementChild) return; // Ensure there's a first child
+    el.style.background = el.firstElementChild.textContent.trim();
+    el.removeChild(el.firstElementChild);
 }
+
+// Function to process elements with links and styles
+function processElementLinks(paragraphs) {
+    paragraphs.forEach(paragraph => {
+        paragraph.querySelectorAll('a').forEach(link => {
+            const parentTag = link.closest('b, i');
+             if (parentTag) {
+                if (parentTag.tagName.toLowerCase() === 'b') {
+                    link.classList.add('blue'); // Add 'con-button' and 'blue' for <b> parent
+                } 
+                link.classList.add('con-button'); // Just add 'con-button' for <i>
+                parentTag.before(link);
+                parentTag.remove(); 
+            } 
+        });
+    });
+}
+
 function processHero(el) {
     processBackgroundColor(el);
-    // add code here
+    const paragraphs = el.querySelectorAll('p');
+    paragraphs.forEach(p => p.querySelector('a') && p.classList.add('action-area'));
+    processElementLinks(paragraphs); 
 }
+
 function processBrick(el) {
     processBackgroundColor(el);
-    // add code here
+    const paragraphs = [...el.querySelectorAll('p')];
+    if (paragraphs.length < 3) {
+        console.error('Brick div does not contain 3 paragraphs.');
+        return;
+    }
+    ['title', 'price', 'description'].forEach((className, index) => paragraphs[index].classList.add(className));
 }
-function processFaq(el) {
-    // improve this code
-    el.innerHTML = `
-        <div class="faq-set">
-            <div class="question">
-                <div>
-                    <h3>${FAQ[0].q}</h3>
-                </div>
-            </div>
-            <div class="answer">
-                <div>
-                    <p>${FAQ[0].a}</p>
-                </div>
-            </div>
-        </div>
-        <div class="faq-set">
-            <div class="question">
-                <div>
-                    <h3>${FAQ[1].q}</h3>
-                </div>
-            </div>
-            <div class="answer">
-                <div>
-                    <p>${FAQ[1].a}</p>
-                </div>
-            </div>
-        </div>
-        <div class="faq-set">
-            <div class="question">
-                <div>
-                    <h3>${FAQ[2].q}</h3>
-                </div>
-            </div>
-            <div class="answer">
-                <div>
-                    <p>${FAQ[2].a}</p>
-                </div>
-            </div>
-        </div>`;
-    // add code here
+
+// Function throttle to help reduce the workload during scroll events
+function throttle(func, limit) {
+    let inThrottle;
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    }
 }
 function processBanner(el) {
-    // add code here
+    processElementLinks([el]); 
+    const hero = document.querySelector('.hero');
+    const toggleBannerVisibility = () => {
+        const heroRect = hero.getBoundingClientRect();
+        
+        if (heroRect.top + heroRect.height < 0) {
+            el.classList.add('sticky-banner'); 
+            el.style.display = 'block';
+        } else {
+            el.classList.remove('sticky-banner'); 
+            el.style.display = 'none';
+        }
+    };
+    window.addEventListener('scroll', throttle(toggleBannerVisibility, 100));
+}
+
+function processFaq(el) {
+    // Insert the FAQ content
+    el.innerHTML = `<div class="faq-container">${
+        FAQ.map(faq => `
+            <div class="faq-set">
+                <div class="question" tabindex="0" aria-expanded="false"><h3>${faq.q}</h3></div>
+                <div class="answer" style="display: none;"><p>${faq.a}</p></div>
+            </div>`
+        ).join('')
+    }</div>`;
+    el.addEventListener('click', event => {
+        const clickedQuestion = event.target.closest('.question');
+        if (!clickedQuestion) return;
+
+        const clickedAnswer = clickedQuestion.nextElementSibling;
+        const isExpanded = clickedQuestion.getAttribute('aria-expanded') === 'true';
+        clickedQuestion.classList.toggle('rotated', !isExpanded);
+        clickedQuestion.setAttribute('aria-expanded', String(!isExpanded));
+        clickedAnswer.style.display = isExpanded ? 'none' : 'block';
+
+        const allQuestions = el.querySelectorAll('.question');
+        allQuestions.forEach(question => {
+            if (question !== clickedQuestion) {
+                const answer = question.nextElementSibling;
+                if (question.getAttribute('aria-expanded') === 'true') {
+                    question.classList.remove('rotated');
+                    question.setAttribute('aria-expanded', 'false');
+                    answer.style.display = 'none';
+                }
+            }
+        });
+    });
 }
 document.querySelectorAll('.hero').forEach(processHero);
 document.querySelectorAll('.brick').forEach(processBrick);
