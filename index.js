@@ -1,3 +1,12 @@
+
+
+//Configs extracted from README for reusability: Easier updates, less code duplication.
+// These config used in processElementLinks function and processBrick function
+const classNameForParagraphsConfig=["title", "price", "description"]
+const tagMappingToClassConfig = {
+    i: ["con-button"],
+    b: ["con-button", "blue"]
+  };
 const FAQ = [
     {
         q: "How much does Photoshop cost?",
@@ -18,33 +27,33 @@ function processBackgroundColor(el) {
     el.style.background = el.firstElementChild.textContent.trim();
     el.removeChild(el.firstElementChild);
 }
+// I've already used console.error for error handelling in functions to continue debuging.
+// We should `throw new Error` in production environments for more robust error handling.
+// This approach would allow for centralized error catching and potentially provide a better user experience
 
 // Function to process elements with links and styles
 function processElementLinks(paragraphs) {
-     const tagMappingToClass = new Map([
-        ['i', ['con-button']],
-        ['b', ['con-button', 'blue']]
-    ]);
     if (!paragraphs) {
-        console.error('processElementLinks: No paragraphs provided');
-        return;
-    }
+      console.error('processElementLinks: No paragraphs provided');
+      return;
+    } 
     paragraphs.forEach(paragraph => {
-        const tagList= Array.from(tagMappingToClass.keys()).join(',');
-        paragraph.querySelectorAll('a').forEach(link => {    
-            const parentTag = link.closest(tagList);
-            if(parentTag){
-                const classList=tagMappingToClass.get(parentTag.tagName.toLowerCase())
-                if (classList){
-                    classList.forEach(actionClassname=>{ link.classList.add(actionClassname)})
-                    parentTag.before(link);
-                    parentTag.remove();  
-                }
-           }
-       }) 
+      paragraph.querySelectorAll('a').forEach(link => {
+        const parentTag = link.closest(Object.keys(tagMappingToClassConfig).join(','));
+  
+        if (parentTag) {
+          const classList = tagMappingToClassConfig[parentTag.tagName.toLowerCase()];
+          if (classList) {
+            classList.forEach(actionClassname => {
+              link.classList.add(actionClassname);
+            });
+            parentTag.before(link);
+            parentTag.remove();
+          }
+        }
+      });
     });
-}
-
+  }
 function processHero(el) {
     if (!el) {
         console.error('processHero: No element provided');
@@ -57,19 +66,21 @@ function processHero(el) {
 }
 
 function processBrick(el) {
-    const MIN_PARAGRAPHS_NUMBER=3;
     if (!el) {
-        console.error('processBrick: No element provided');
-        return;
+      console.error('processBrick: No element provided');
+      return;
     }
     processBackgroundColor(el);
     const paragraphs = [...el.querySelectorAll('p')];
-    if (paragraphs.length < MIN_PARAGRAPHS_NUMBER) {
-        console.error('Brick div does not contain 3 paragraphs.');
-        return;
+    const minNumberOfParagraphs = classNameForParagraphsConfig.length;
+    if (paragraphs.length < minNumberOfParagraphs) {
+      console.error(`Brick div does not contain ${minNumberOfParagraphs} paragraphs.`);
+      return;
     }
-    ['title', 'price', 'description'].forEach((className, index) => paragraphs[index].classList.add(className));
-}
+    paragraphs.forEach((paragraph, index) => {
+      paragraph.classList.add(classNameForParagraphsConfig[index]);
+    });
+  }
 
 // Function throttle to help reduce the workload during scroll events
 function throttle(func, limit) {
