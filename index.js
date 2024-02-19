@@ -21,18 +21,20 @@ function processBackgroundColor(el) {
 
 // Function to process elements with links and styles
 function processElementLinks(paragraphs) {
+    const tagMappingtoClass=new Map([['i',['con-button']],['b',['con-button','blue']]]);
     paragraphs.forEach(paragraph => {
-        paragraph.querySelectorAll('a').forEach(link => {
-            const parentTag = link.closest('b, i');
-             if (parentTag) {
-                if (parentTag.tagName.toLowerCase() === 'b') {
-                    link.classList.add('blue'); // Add 'con-button' and 'blue' for <b> parent
-                } 
-                link.classList.add('con-button'); // Just add 'con-button' for <i>
-                parentTag.before(link);
-                parentTag.remove(); 
-            } 
-        });
+        const tagList= Array.from(tagMappingtoClass.keys()).join(',');
+        paragraph.querySelectorAll('a').forEach(link => {    
+            const parentTag = link.closest(tagList);
+            if(parentTag){
+                const classList=tagMappingtoClass.get(parentTag.tagName.toLowerCase())
+                if (classList){
+                    classList.forEach(actionClassname=>{ link.classList.add(actionClassname)})
+                    parentTag.before(link);
+                    parentTag.remove();  
+                }
+           }
+       }) 
     });
 }
 
